@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Routes, Route} from 'react-router-dom'
 import './App.css'
-import Sidebar from './components/Sidebar'
+import Header from './components/Header'
 import Home from './components/Home'
 import Gallery from './components/Gallery'
 import CreateHunter from './components/CreateHunter'
@@ -15,7 +15,7 @@ function App() {
   return (
     <div>
       <Routes>
-        <Route path="/" element={<Sidebar />}>
+        <Route path="/" element={<Header />}>
           <Route index element={<Home />}/>
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/create" element={<CreateHunter />}/>
