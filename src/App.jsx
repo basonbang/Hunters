@@ -17,11 +17,10 @@ function App() {
       <Routes>
         <Route path="/" element={<Header />}>
           <Route index element={<Home />}/>
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/create" element={<CreateHunter />}/>
-          <Route path="/:hunterId" element={<HunterDetails />}> 
-            <Route path="/:hunterId/edit" element={<EditHunter />} />
-          </Route>
+          <Route path="gallery" element={<Gallery />} />
+          <Route path="create" element={<CreateHunter />}/>
+          <Route path=":hunterId" element={<HunterDetails />} /> 
+          <Route path=":hunterId/edit" element={<EditHunter />} />
           <Route path="*" element={<NoMatch/>}/>
         </Route>
       </Routes>
