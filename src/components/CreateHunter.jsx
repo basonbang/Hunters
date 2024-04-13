@@ -1,7 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import axios from 'axios';
+import { supabase } from '../supabaseClient';
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const CreateHunter = () => {
+
+  const [name, setName] = useState('');
+  const [selectedWeapon, setSelectedWeapon] = useState();
+  const [displayedWeapon, setDisplayedWeapon] = useState('None Selected');
+  const [armorId, setArmorId] = useState();
 
   const [armorSets, setArmorSets] = useState([]);
   const [weapons, setWeapons] = useState([]);
@@ -56,9 +64,72 @@ const CreateHunter = () => {
   // update weapon type state when user selects a weapon type
   const updateWeaponType = (event) => {
     setWeaponType(event.target.value); 
+    setSelectedWeapon(undefined);
   }
 
-  console.log(weapons);
+  const updateSelectedWeapon = (event) => {
+    // if user hasn't selected a weapon yet, weapon is undefined and prompts user to select a weapon
+    if (event.target.value === 'None Selected') {
+      setSelectedWeapon(undefined);
+    } else {
+      // otherwise, update selected weapon and displayed weapon
+      setSelectedWeapon(event.target.value);
+      setDisplayedWeapon(event.target.value);
+    }
+  }
+  
+  // fetch armor data on component mount
+  useEffect(() => {
+    const fetchArmorData = async () => {
+      const response = await axios.get('https://mhw-db.com/armor/sets?p={"id":true,"name":true}&q={"rank":"high"}');
+      const arrayOfArmorSets = response.data.map((armorSet) => {
+        return {
+          id: armorSet.id,
+          name: armorSet.name
+        }
+      })
+      setArmorSets(arrayOfArmorSets);
+    }
+    fetchArmorData();
+  }, [])
+
+  const updateSelectedArmor = (event) => {
+    if (event.target.value === 'None Selected') {
+      setArmorId(undefined);
+    } else {
+      setArmorId(event.target.value);
+    }
+  }
+
+  const updateName = (event) => {
+    setName(event.target.value);
+  }
+
+  const createRowInSupabase = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("Hunters")
+        .insert([{ name: name, weaponId: selectedWeapon, armorId: armorId }])
+        .select('*');
+      notify();
+    } catch (error) {
+      console.log("Error inserting hunter: ", error.message);
+      toast.error("Error creating hunter!",)
+    }
+  };
+
+  const notify = () =>
+    toast.success("Hunter Created!", {
+      position: "top-center",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "dark",
+    });
+
 
   return ( 
     <div>
@@ -66,12 +137,13 @@ const CreateHunter = () => {
         <h1>Create Your Hunter</h1>
         <img src="/1_Zy1vbnTdo-MMz-rqnrHzVQ-ai-brush-removebg-rsqseog.png" alt="Create Hunter Banner" className='h-96 w-auto mt-10'/>
       </div>
+      {/* User Input */}
       <div>
         <div className="flex items-center justify-center gap-4">
           <div>
             <label>
               <h3>Name:</h3>
-              <input type="text" name="name" id="name" placeholder="Enter your hunter's name!" />
+              <input type="text" name="name" value={name} id="name" placeholder="Enter your hunter's name!" onChange={updateName}/>
             </label>
           </div>
 
@@ -86,25 +158,42 @@ const CreateHunter = () => {
                   </option>
                 ))}
               </select>
+              {(weaponType !== 'None Selected' && weaponType) && (
+                <label>
+                  <h3> Weapon: </h3>
+                  <select name="selectedWeapon" value={displayedWeapon} onChange={updateSelectedWeapon}>
+                    <option value='None Selected'>Select Your Weapon</option>
+                    {weapons.map((weapon, i) => (
+                      <option value={weapon.id} key={i}>
+                        {weapon.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </label>
-
-            {(weaponType !== 'None Selected' && weaponType) && (
-              <label>
-                <h3> Weapon: </h3>
-                <select name="selectedWeapon">
-                  <option value='None Selected'>Select Your Weapon</option>
-                  {weapons.map((weapon, i) => (
-                    <option value={weapon} key={i}>
-                      {weapon.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-
           </div>
 
+          <div>
+            <label>
+              <h3>Armor Set:</h3>
+              <select name="armorSet" onChange={updateSelectedArmor}>
+                <option value="None Selected">Select an Armor Set</option>
+                {armorSets.map((armorSet, i) => (
+                  <option value={armorSet.id} key={i}>
+                    {armorSet.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
+      </div>
+      <div className="flex justify-center items-center mt-4">
+        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={createRowInSupabase}>
+          Create Hunter
+        </button>
+        <ToastContainer />
       </div>
     </div>
    );
